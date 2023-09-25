@@ -45,8 +45,8 @@ public class CarController {
     }
 
     @PostMapping("/linkCarAndDriver/{userId}/{carId}")
-    public CarInfoResponse carAndDriver(@PathVariable Long userId, @PathVariable Long CarId){
-        return carService.linkCarAndDriver(userId, CarId);
+    public CarInfoResponse carAndDriver(@PathVariable Long userId, @PathVariable Long carId){
+        return carService.linkCarAndDriver(userId, carId);
     }
 
 }

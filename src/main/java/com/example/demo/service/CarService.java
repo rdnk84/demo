@@ -15,7 +15,7 @@ public interface CarService {
 
     CarInfoResponse createCar(CarInfoRequest request);
 
-    CarInfoResponse deleteCar(Long id);
+    void deleteCar(Long id);
 
     List<CarInfoResponse> getAllCars();
 

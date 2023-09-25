@@ -10,7 +10,7 @@ public interface UserService {
     UserInfoResponse getUser(Long id);
     UserInfoResponse updateUser(Long id, UserInfoRequest request);
     UserInfoResponse createUser(UserInfoRequest request);
-    UserInfoResponse deleteUser(Long id);
+    void deleteUser(Long id);
 
     List<UserInfoResponse> getAllUsers();
 }
