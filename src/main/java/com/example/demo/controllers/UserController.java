@@ -1,9 +1,12 @@
 package com.example.demo.controllers;
 
 import com.example.demo.model.dto.request.UserInfoRequest;
+import com.example.demo.model.dto.response.CarInfoResponse;
 import com.example.demo.model.dto.response.UserInfoResponse;
 import com.example.demo.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,13 +29,17 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    public List<UserInfoResponse> allUsers() {
-        return userService.getAllUsers();
+    public Page<UserInfoResponse> allUsers(@RequestParam(defaultValue = "1") Integer page,
+                                           @RequestParam(defaultValue = "10") Integer perPage,
+                                           @RequestParam(defaultValue = "email") String sort,
+                                           @RequestParam(defaultValue = "ASC") Sort.Direction order,
+                                           @RequestParam(required = false) String filter) {
+        return userService.getAllUsers(page, perPage, sort, order,filter);
     }
 
     @GetMapping("/{id}")
     public UserInfoResponse getUser(@PathVariable Long id) {
-        return userService.getUser(id);
+        return userService.getUserDto(id);
     }
 
     @PutMapping("/{id}")
@@ -43,5 +50,10 @@ public class UserController {
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+    }
+
+    @GetMapping("/carsByUser/{userId}")
+    public List<CarInfoResponse> carsByUser(@PathVariable Long userId) {
+       return userService.getCarsByUser(userId);
     }
 }

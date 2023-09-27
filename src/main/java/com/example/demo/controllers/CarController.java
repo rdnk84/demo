@@ -7,6 +7,9 @@ import com.example.demo.model.dto.response.UserInfoResponse;
 import com.example.demo.service.UserService;
 import com.example.demo.service.impl.CarServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +27,19 @@ public class CarController {
         return carService.createCar(request);
     }
 
+//    @GetMapping("/all")
+//    public List<CarInfoResponse> allCars() {
+//        return carService.getAllCars();
+//    }
+
     @GetMapping("/all")
-    public List<CarInfoResponse> allCars() {
-        return carService.getAllCars();
+    public Page<CarInfoResponse> allCars(@RequestParam(defaultValue = "1") Integer page,
+                                         @RequestParam(defaultValue = "10") Integer perPage,
+                                         @RequestParam(defaultValue = "brand") String sort,
+                                         @RequestParam(defaultValue = "ASC") Sort.Direction order,
+                                         @RequestParam(required = false) String filter) {
+
+        return carService.getAllCars(page, perPage, sort, order, filter);
     }
 
     @GetMapping("/{id}")

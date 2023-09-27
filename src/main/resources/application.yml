@@ -1,13 +1,13 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/
+    url: jdbc:postgresql://localhost:5432/itmo-demo
     username: postgres
     password: 357
     driver-class-name: org.postgresql.Driver
 
   jpa:
     database: postgresql
-    show-sql: false
+    show-sql: true
     generate-ddl: true
     hibernate:
       ddl-auto: update
@@ -17,3 +17,9 @@ spring:
         jdbc:
           lob:
             non_contextual_creation: true
+
+logging:
+  level:
+    org:
+      hibernate:
+        type: trace

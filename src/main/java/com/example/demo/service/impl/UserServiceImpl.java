@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.UserRepo;
 import com.example.demo.model.dto.request.UserInfoRequest;
+import com.example.demo.model.dto.response.CarInfoResponse;
 import com.example.demo.model.dto.response.UserInfoResponse;
 import com.example.demo.model.enums.UserStatus;
 import com.example.demo.service.UserService;
@@ -10,12 +11,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.example.demo.utils.PaginationUtil.getPageRequest;
 
 @Slf4j
 @Service
@@ -24,22 +30,38 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final ObjectMapper mapper;
+//    @Override
+//    public UserInfoResponse getUser(Long id) {
 
-    @Override
-    public UserInfoResponse getUser(Long id) {
-        User user = userRepo.findById(id).orElse(new User());
 //        for(UserInfoResponse user : users) {
 //            if(id.equals(user.getId())) {
 //                return user;
 //            }
 //        }
+//        return null;
+//    }
+
+//    @Override
+//    public UserInfoResponse getUser(Long id) {
+//        User user = userRepo.findById(id).orElse(new User());
+//        return mapper.convertValue(user, UserInfoResponse.class);
+//    }
+
+    @Override
+    public UserInfoResponse getUserDto(Long id) {
+        User user = userRepo.findById(id).orElse(new User());
         return mapper.convertValue(user, UserInfoResponse.class);
+    }
+
+    @Override
+    public User getUser(Long id) {
+        return userRepo.findById(id).orElse(new User());
     }
 
     @Override
     public UserInfoResponse updateUser(Long id, UserInfoRequest request) {
         User user = userRepo.findById(id).orElse(null);
-        if(user == null) {
+        if (user == null) {
             return null;
         }
         user.setEmail(StringUtils.isBlank(request.getEmail()) ? user.getEmail() : request.getEmail());
@@ -91,7 +113,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         User user = userRepo.findById(id).orElse(null);
-        if(user != null) {
+        if (user != null) {
             user.setStatus(UserStatus.DELETED);
             user.setUpdatedAt(LocalDateTime.now());
             userRepo.save(user);
@@ -99,10 +121,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserInfoResponse> getAllUsers() {
-        return userRepo.findAll().stream()
+    public Page<UserInfoResponse> getAllUsers(Integer page, Integer perPage, String sort, Sort.Direction order, String filter) {
+
+        Pageable pageRequest = getPageRequest(page, perPage, sort, order);
+        List<User> pageList;
+        if (StringUtils.isBlank(filter)) {
+            pageList = userRepo.findAllNotDeleted(pageRequest);
+        } else {
+            pageList = userRepo.findAllNotDeleted(pageRequest, filter);
+        }
+        List<UserInfoResponse> response = pageList.stream()
                 .filter(u -> u.getStatus() != UserStatus.DELETED)
                 .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                 .collect(Collectors.toList());
+        return new PageImpl<>(response);
+    }
+
+    @Override
+    public User updateCarList(User user) {
+        return userRepo.save(user);
+    }
+
+    @Override
+    public List<CarInfoResponse> getCarsByUser(Long id) {
+        User user = getUser(id);
+        return user.getCars().stream()
+                .map(c -> mapper.convertValue(c, CarInfoResponse.class))
+                .collect(Collectors.toList());
+    }
+
+    User getUserByFirstName(String firstName) {
+        return userRepo.findByFirstName(firstName);
     }
 }
