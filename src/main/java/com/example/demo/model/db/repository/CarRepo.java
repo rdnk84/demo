@@ -13,9 +13,12 @@ public interface CarRepo extends JpaRepository<Car, Long> {
     @Query("select c from Car c where c.status <> '2'")
     Page<Car> findAllNotDeleted(Pageable request);
 
-    @Query("select c from Car c where c.status <> '2' and (c.brand like %:filter% or c.model like %:filter%)")
-    Page<Car> findAllNotDeleted(Pageable request, @Param("filter") String filter);
+    @Query("select c from Car c where c.status <> '2' and c.brand like %:brand%")
+    Page<Car> findAllNotDeletedBrand(Pageable request, @Param("brand") String brand);
 
+    @Query("select c from Car c where c.status <> '2' and c.model like %:model%")
+    Page<Car> findAllNotDeletedModel(Pageable request, @Param("model") String model);
 
-
+    @Query("select c from Car c where c.status <> '2' and c.model like %:model% and c.brand like %:brand%")
+    Page<Car> findAllNotDeleted(Pageable request, @Param("brand") String brand, @Param("model") String model);
 }

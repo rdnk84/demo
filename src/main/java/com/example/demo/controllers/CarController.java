@@ -35,11 +35,12 @@ public class CarController {
     @GetMapping("/all")
     public Page<CarInfoResponse> allCars(@RequestParam(defaultValue = "1") Integer page,
                                          @RequestParam(defaultValue = "10") Integer perPage,
-                                         @RequestParam(defaultValue = "brand") String sort,
+                                         @RequestParam(defaultValue = "price") String sort,
                                          @RequestParam(defaultValue = "ASC") Sort.Direction order,
-                                         @RequestParam(required = false) String filter) {
+                                         @RequestParam(required = false) String brand,
+                                         @RequestParam(required = false) String model) {
 
-        return carService.getAllCars(page, perPage, sort, order, filter);
+        return carService.getAllCars(page, perPage, sort, order, brand, model);
     }
 
     @GetMapping("/{id}")
@@ -58,7 +59,7 @@ public class CarController {
     }
 
     @PostMapping("/linkCarAndDriver/{userId}/{carId}")
-    public CarInfoResponse carAndDriver(@PathVariable Long userId, @PathVariable Long carId){
+    public CarInfoResponse carAndDriver(@PathVariable Long userId, @PathVariable Long carId) {
         return carService.linkCarAndDriver(userId, carId);
     }
 

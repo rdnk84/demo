@@ -129,17 +129,26 @@ public class CarServiceImpl implements CarService {
         return carInfoResponse;
     }
 
-    public Page<CarInfoResponse> getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order, String filter) {
+    public Page<CarInfoResponse> getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order,  String brand, String model) {
 //        PaginationUtil.getPageRequest(page, perPage, sort, order); //или можем просто заимпортировать метод статического класса
         Pageable pageRequest = getPageRequest(page, perPage, sort, order);
         Page<Car> carPageList;
 
         //тут- если фильтр передали и если нет
-        if (StringUtils.isBlank(filter)) {
-            carPageList = carRepo.findAllNotDeleted(pageRequest);
-        } else {
-            carPageList = carRepo.findAllNotDeleted(pageRequest, filter);
+        if (StringUtils.isNotBlank(brand) && StringUtils.isNotBlank(model)) {
+            carPageList = carRepo.findAllNotDeleted(pageRequest, brand, model);
         }
+        else {
+                if (StringUtils.isNotBlank(brand)) {
+                    carPageList = carRepo.findAllNotDeletedBrand(pageRequest, brand);
+                }
+                else if (StringUtils.isNotBlank(model)){
+                    carPageList = carRepo.findAllNotDeletedModel(pageRequest, model);
+                } else {
+                 carPageList = carRepo.findAllNotDeleted(pageRequest);
+                }
+            }
+
         //методом getContent() вытаскиваем весь контент в List
         List<CarInfoResponse> response = carPageList.getContent().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
