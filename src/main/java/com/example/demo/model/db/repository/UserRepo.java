@@ -43,4 +43,7 @@ public interface UserRepo extends JpaRepository<User, Long> {
     @Query("select u from User u where u.status <> '2' and u.email like %:filter%")
     List<User> findAllNotDeleted(Pageable request, @Param("filter") String filter);
 
+    @Query(nativeQuery = true, value = "%:filter%")
+    List<User> findAllIsNeeded (@Param("filter") String filter);
+
 }

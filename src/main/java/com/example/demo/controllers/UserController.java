@@ -34,7 +34,13 @@ public class UserController {
                                            @RequestParam(defaultValue = "email") String sort,
                                            @RequestParam(defaultValue = "ASC") Sort.Direction order,
                                            @RequestParam(required = false) String filter) {
+
         return userService.getAllUsers(page, perPage, sort, order,filter);
+    }
+
+    @GetMapping("/allINeed")
+    public List<UserInfoResponse> usersByQuery(@RequestParam(required = false) String filter) {
+        return userService.usersByQuery(filter);
     }
 
     @GetMapping("/{id}")

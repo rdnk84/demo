@@ -24,4 +24,6 @@ public interface UserService {
     User updateCarList(User user);
 
     List<CarInfoResponse> getCarsByUser(Long id);
+
+    List<UserInfoResponse> usersByQuery(String query);
 }

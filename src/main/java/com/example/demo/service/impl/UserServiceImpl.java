@@ -137,6 +137,7 @@ public class UserServiceImpl implements UserService {
         return new PageImpl<>(response);
     }
 
+
     @Override
     public User updateCarList(User user) {
         return userRepo.save(user);
@@ -148,6 +149,21 @@ public class UserServiceImpl implements UserService {
         return user.getCars().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserInfoResponse> usersByQuery(String query) {
+        List<UserInfoResponse> users;
+        if (StringUtils.isBlank(query)) {
+            users = userRepo.findAll().stream()
+                    .map(u -> mapper.convertValue(u, UserInfoResponse.class))
+                    .collect(Collectors.toList());
+        } else {
+            users = userRepo.findAllIsNeeded(query).stream()
+                    .map(u -> mapper.convertValue(u, UserInfoResponse.class))
+                    .collect(Collectors.toList());
+        }
+        return users;
     }
 
     User getUserByFirstName(String firstName) {
