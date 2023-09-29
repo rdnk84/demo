@@ -17,19 +17,22 @@ import java.util.Optional;
 public interface UserRepo extends JpaRepository<User, Long> {
 
 //    Optional<User> findByEmail(String email); //если возвращаем Optional-то тогда есть варианты для обработки
-    User findByEmail(String email); //а здесь может вернуться null, надо осторожно.
+//    User findByEmail(String email); //а здесь может вернуться null, надо осторожно.
     // Также, может быть найдено несколько сущностей по email, и тогда выбросится исключение здесь, поэтому надо осторожно когда мы достаем одну сущность,
     // а не лист по какому-то параметру
 
 
-    List<User> findAllByEmail(String email);
+    Optional<User> findByEmail(String email);
 
     List<User> findAllByStatus(UserStatus status);
 
     //а в этом методе обращаемся не с помощью HQL, а с помощью SQL
-    //ищем пользователя по email,первого с начала
-    @Query(nativeQuery = true, value = "select * from users where first_name = :firstName order by first_name desc limit 1")
-    User findByFirstName(@Param("firstName") String firstName);
+    //ищем пользователя по firstName,первого с начала
+//    @Query(nativeQuery = true, value = "select * from users where first_name = :firstName order by first_name desc limit 1")
+//    Page<User>  findByFirstName(@Param("firstName") String firstName);
+
+    @Query(nativeQuery = true, value = "select * from users where first_name = :firstName")
+    List<User> findByFirstName(@Param("firstName") String firstName); //"firstName" - это поле key в параметрах запроса, а :firstName - это идет в value
 
     //для HQL диалекта не надо писать nativeQuery = true
     //и можно использовать алиасы
@@ -39,6 +42,8 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.status <> '2'")
     List<User> findAllNotDeleted(Pageable request);
+
+    List<User> findAll();
 
     @Query("select u from User u where u.status <> '2' and u.email like %:filter%")
     List<User> findAllNotDeleted(Pageable request, @Param("filter") String filter);

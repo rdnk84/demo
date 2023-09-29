@@ -25,5 +25,7 @@ public interface UserService {
 
     List<CarInfoResponse> getCarsByUser(Long id);
 
-    List<UserInfoResponse> usersByQuery(String query);
+    Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order,String firstName, String lastName, String email);
+
+    public List<UserInfoResponse> usersByFirstName(String name);
 }

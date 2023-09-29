@@ -35,12 +35,23 @@ public class UserController {
                                            @RequestParam(defaultValue = "ASC") Sort.Direction order,
                                            @RequestParam(required = false) String filter) {
 
-        return userService.getAllUsers(page, perPage, sort, order,filter);
+        return userService.getAllUsers(page, perPage, sort, order, filter);
     }
 
-    @GetMapping("/allINeed")
-    public List<UserInfoResponse> usersByQuery(@RequestParam(required = false) String filter) {
-        return userService.usersByQuery(filter);
+    @GetMapping("/bySearch")
+    public Page<UserInfoResponse> usersByQuery(@RequestParam(defaultValue = "1") Integer page,
+                                               @RequestParam(defaultValue = "10") Integer perPage,
+                                               @RequestParam(defaultValue = "email") String sort,
+                                               @RequestParam(defaultValue = "ASC") Sort.Direction order,
+                                               @RequestParam(required = false) String firstName,
+                                               @RequestParam(required = false) String lastName,
+                                               @RequestParam(required = false) String email) {
+        return userService.usersByQuery(page, perPage, sort, order, firstName, lastName, email);
+    }
+
+    @GetMapping("/name")
+    public List<UserInfoResponse> usersByFirstName(@RequestParam(required = false) String firstName) {
+        return userService.usersByFirstName(firstName);
     }
 
     @GetMapping("/{id}")
@@ -60,6 +71,6 @@ public class UserController {
 
     @GetMapping("/carsByUser/{userId}")
     public List<CarInfoResponse> carsByUser(@PathVariable Long userId) {
-       return userService.getCarsByUser(userId);
+        return userService.getCarsByUser(userId);
     }
 }

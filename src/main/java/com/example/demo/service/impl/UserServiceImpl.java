@@ -1,7 +1,10 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.exceptions.CustomException;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.UserRepo;
+import com.example.demo.model.db.repository.UserSearchDao;
+import com.example.demo.model.dto.request.CarInfoRequest;
 import com.example.demo.model.dto.request.UserInfoRequest;
 import com.example.demo.model.dto.response.CarInfoResponse;
 import com.example.demo.model.dto.response.UserInfoResponse;
@@ -11,10 +14,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final ObjectMapper mapper;
+    private final UserSearchDao userSearchDao;
 //    @Override
 //    public UserInfoResponse getUser(Long id) {
 
@@ -55,7 +57,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUser(Long id) {
-        return userRepo.findById(id).orElse(new User());
+
+        String errMsg = String.format("User with id %d not found", id);
+        return userRepo.findById(id)
+                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
     }
 
     @Override
@@ -81,6 +86,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoResponse createUser(UserInfoRequest request) {
+        String email = request.getEmail().trim();
+        userRepo.findByEmail(email).ifPresent(u -> {throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
+        });
         User user = mapper.convertValue(request, User.class);
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus(UserStatus.CREATED);
@@ -152,21 +160,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserInfoResponse> usersByQuery(String query) {
+    public Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order,String firstName, String lastName, String email) {
+
         List<UserInfoResponse> users;
-        if (StringUtils.isBlank(query)) {
-            users = userRepo.findAll().stream()
+        Pageable pageRequest = getPageRequest(page, perPage, sort, order);
+        Page<UserInfoResponse> pageOfUsers;
+
+        if(firstName == null && lastName == null && email == null) {
+            users = userRepo.findAllNotDeleted(pageRequest).stream()
                     .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                     .collect(Collectors.toList());
+            return new PageImpl<>(users);
         } else {
-            users = userRepo.findAllIsNeeded(query).stream()
+            users = userSearchDao.usersByCriteria(pageRequest, firstName, lastName, email).stream()
                     .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                     .collect(Collectors.toList());
         }
+        return new PageImpl<>(users);
+    }
+
+    @Override
+    public List<UserInfoResponse> usersByFirstName(String name) {
+        List<UserInfoResponse> users;
+        users = userRepo.findByFirstName(name).stream()
+                .map(u -> mapper.convertValue(u, UserInfoResponse.class))
+                .collect(Collectors.toList());
         return users;
     }
 
-    User getUserByFirstName(String firstName) {
-        return userRepo.findByFirstName(firstName);
-    }
+
 }
