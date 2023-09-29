@@ -56,6 +56,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public UserInfoResponse getUser(@PathVariable Long id) {
+
         return userService.getUserDto(id);
     }
 

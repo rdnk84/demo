@@ -51,6 +51,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoResponse getUserDto(Long id) {
+        String errMsg = String.format("User with id %d not found", id);
+        userRepo.findById(id)
+                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
         User user = userRepo.findById(id).orElse(new User());
         return mapper.convertValue(user, UserInfoResponse.class);
     }
