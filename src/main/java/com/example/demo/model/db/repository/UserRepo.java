@@ -27,12 +27,9 @@ public interface UserRepo extends JpaRepository<User, Long> {
     List<User> findAllByStatus(UserStatus status);
 
     //а в этом методе обращаемся не с помощью HQL, а с помощью SQL
-    //ищем пользователя по firstName,первого с начала
-//    @Query(nativeQuery = true, value = "select * from users where first_name = :firstName order by first_name desc limit 1")
-//    Page<User>  findByFirstName(@Param("firstName") String firstName);
-
+    //ищем пользователя по email,первого с начала
     @Query(nativeQuery = true, value = "select * from users where first_name = :firstName")
-    List<User> findByFirstName(@Param("firstName") String firstName); //"firstName" - это поле key в параметрах запроса, а :firstName - это идет в value
+    List<User> findByFirstName(@Param("firstName") String firstName);
 
     //для HQL диалекта не надо писать nativeQuery = true
     //и можно использовать алиасы
@@ -42,8 +39,6 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.status <> '2'")
     List<User> findAllNotDeleted(Pageable request);
-
-    List<User> findAll();
 
     @Query("select u from User u where u.status <> '2' and u.email like %:filter%")
     List<User> findAllNotDeleted(Pageable request, @Param("filter") String filter);

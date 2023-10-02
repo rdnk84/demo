@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.exceptions.CustomException;
 import com.example.demo.model.db.entity.Car;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.CarRepo;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -50,20 +52,31 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarInfoResponse getCar(Long id) {
-        Car car = carRepo.findById(id).orElse(new Car());
+        String errMsg = String.format("User with id %d not found", id);
+        Car car = carRepo.findById(id).orElseThrow(() -> {
+            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
+        });
         return mapper.convertValue(car, CarInfoResponse.class);
     }
 
     private Car getCarById(Long id) {
-        return carRepo.findById(id).orElse(new Car());
+        String errMsg = String.format("User with id %d not found", id);
+        Car car = carRepo.findById(id).orElseThrow(() -> {
+            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
+        });
+        return car;
     }
 
     @Override
     public CarInfoResponse updateCar(Long id, CarInfoRequest request) {
-        Car car = carRepo.findById(id).orElse(null);
-        if (car == null) {
-            return null;
-        }
+        String errMsg = String.format("User with id %d not found", id);
+        Car car = carRepo.findById(id).orElseThrow(() -> {
+            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
+        });
+//        Car car = carRepo.findById(id).orElse(null);
+//        if (car == null) {
+//            return null;
+//        }
         car.setBrand(StringUtils.isBlank(request.getBrand()) ? car.getBrand() : request.getBrand());
         car.setModel(StringUtils.isBlank(request.getModel()) ? car.getModel() : request.getModel());
         car.setColor(request.getColor() == null ? car.getColor() : request.getColor());
@@ -80,21 +93,28 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public CarInfoResponse createCar(CarInfoRequest request) {
+        carRepo.findByModelAndAndBrand(request.getModel(), request.getBrand())
+                .ifPresent(u -> {
+                    throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
+                });
+
         Car car = mapper.convertValue(request, Car.class);
         car.setStatus(CarStatus.CREATED);
         car.setCreatedAt(LocalDateTime.now());
-        Car save = carRepo.save(car);
+        carRepo.save(car);
         CarInfoResponse carCreated = mapper.convertValue(car, CarInfoResponse.class);
         return carCreated;
     }
 
     @Override
     public void deleteCar(Long id) {
-        Car car = carRepo.findById(id).orElse(null);
-        if (car != null) {
-            car.setUpdatedAt(LocalDateTime.now());
-            car.setStatus(CarStatus.DELETED);
-        }
+        String errMsg = String.format("User with id %d not found", id);
+        Car car = carRepo.findById(id).orElseThrow(() -> {
+            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
+        });
+
+        car.setUpdatedAt(LocalDateTime.now());
+        car.setStatus(CarStatus.DELETED);
     }
 
     @Override
@@ -129,7 +149,14 @@ public class CarServiceImpl implements CarService {
         return carInfoResponse;
     }
 
-    public Page<CarInfoResponse> getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order,  String brand, String model) {
+
+
+//    @Override
+//    public CarInfoResponse getCarByParameter(Integer page, Integer perPage, String sort, Sort.Direction order, String filter) {
+//        return null;
+//    }
+
+    public Page<CarInfoResponse> getCarsByParameter(Integer page, Integer perPage, String sort, Sort.Direction order, String brand, String model) {
 //        PaginationUtil.getPageRequest(page, perPage, sort, order); //или можем просто заимпортировать метод статического класса
         Pageable pageRequest = getPageRequest(page, perPage, sort, order);
         Page<Car> carPageList;
@@ -137,23 +164,39 @@ public class CarServiceImpl implements CarService {
         //тут- если фильтр передали и если нет
         if (StringUtils.isNotBlank(brand) && StringUtils.isNotBlank(model)) {
             carPageList = carRepo.findAllNotDeleted(pageRequest, brand, model);
-        }
-        else {
-                if (StringUtils.isNotBlank(brand)) {
-                    carPageList = carRepo.findAllNotDeletedBrand(pageRequest, brand);
-                }
-                else if (StringUtils.isNotBlank(model)){
-                    carPageList = carRepo.findAllNotDeletedModel(pageRequest, model);
-                } else {
-                 carPageList = carRepo.findAllNotDeleted(pageRequest);
-                }
+        } else {
+            if (StringUtils.isNotBlank(brand)) {
+                carPageList = carRepo.findAllNotDeletedBrand(pageRequest, brand);
+            } else if (StringUtils.isNotBlank(model)) {
+                carPageList = carRepo.findAllNotDeletedModel(pageRequest, model);
+            } else {
+                carPageList = carRepo.findAllNotDeleted(pageRequest);
             }
-
+        }
         //методом getContent() вытаскиваем весь контент в List
         List<CarInfoResponse> response = carPageList.getContent().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());
+        if(response.isEmpty()){
+            throw new CustomException("no car with such parameter found", HttpStatus.NOT_FOUND);
+        }
         return new PageImpl<>(response); //класс PageImpl реализует интерфейс Page
         //здесь пустой generic<> потому что мы выше уже указати конкретный тип <CarInfoResponse>
     }
+
+    @Override
+    public Page<CarInfoResponse>  getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order) {
+        Pageable pageRequest = getPageRequest(page, perPage, sort, order);
+      Page<Car> cars = carRepo.findAllNotDeleted(pageRequest);
+        List<CarInfoResponse> response = cars.getContent().stream()
+                .map(c -> mapper.convertValue(c, CarInfoResponse.class))
+                .collect(Collectors.toList());
+        if(response.isEmpty()){
+            throw new CustomException("no car with such parameter found", HttpStatus.NOT_FOUND);
+        }
+        return new PageImpl<>(response);
+
+    }
+
+
 }

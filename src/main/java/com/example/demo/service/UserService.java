@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface UserService {
 
-    UserInfoResponse getUserDto(Long id);
+    UserInfoResponse getUserDto(String apiKey, Long id);
 
     User getUser(Long id);
 

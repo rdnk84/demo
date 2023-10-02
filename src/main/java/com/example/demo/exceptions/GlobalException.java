@@ -6,6 +6,7 @@ import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -57,5 +58,11 @@ public class GlobalException {
         log.error("wrong data for parameter: {}", parameter);
 
         return ResponseEntity.status(404).body(new ErrorMessage(String.format("parameter is missing: %s", parameter)));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorMessage> duplicateKeyValue(DataIntegrityViolationException ex){
+      String parameter = ex.getMessage();
+        return ResponseEntity.status(400).body(new ErrorMessage(String.format("user or car with this id already exist: %s", parameter)));
     }
 }

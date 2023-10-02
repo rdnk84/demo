@@ -33,6 +33,7 @@ public class User {
     @Column(name = "middle_name")
     String middleName;
     Integer age;
+
     @Enumerated(EnumType.STRING)
     Gender gender;
 

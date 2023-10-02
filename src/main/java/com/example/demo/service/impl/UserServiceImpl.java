@@ -4,7 +4,6 @@ import com.example.demo.exceptions.CustomException;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.UserRepo;
 import com.example.demo.model.db.repository.UserSearchDao;
-import com.example.demo.model.dto.request.CarInfoRequest;
 import com.example.demo.model.dto.request.UserInfoRequest;
 import com.example.demo.model.dto.response.CarInfoResponse;
 import com.example.demo.model.dto.response.UserInfoResponse;
@@ -14,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.example.demo.config.secret.Constants.validateKey;
 import static com.example.demo.utils.PaginationUtil.getPageRequest;
 
 @Slf4j
@@ -50,7 +51,8 @@ public class UserServiceImpl implements UserService {
 //    }
 
     @Override
-    public UserInfoResponse getUserDto(Long id) {
+    public UserInfoResponse getUserDto(String apiKey, Long id) {
+        validateKey(apiKey);
         String errMsg = String.format("User with id %d not found", id);
         userRepo.findById(id)
                 .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
@@ -60,7 +62,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUser(Long id) {
-
         String errMsg = String.format("User with id %d not found", id);
         return userRepo.findById(id)
                 .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
@@ -68,10 +69,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoResponse updateUser(Long id, UserInfoRequest request) {
-        User user = userRepo.findById(id).orElse(null);
-        if (user == null) {
-            return null;
-        }
+        String errMsg = String.format("User with id %d not found", id);
+
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+//        if (user == null) {
+//            return null;
+//        }
         user.setEmail(StringUtils.isBlank(request.getEmail()) ? user.getEmail() : request.getEmail());
         user.setGender(request.getGender() == null ? user.getGender() : request.getGender());
         user.setAge(user.getAge() == null ? user.getAge() : request.getAge());
@@ -90,6 +94,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserInfoResponse createUser(UserInfoRequest request) {
         String email = request.getEmail().trim();
+
+        if(!EmailValidator.getInstance().isValid(email)){
+            throw new CustomException("invalid email", HttpStatus.BAD_REQUEST);
+        }
+
         userRepo.findByEmail(email).ifPresent(u -> {throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
         });
         User user = mapper.convertValue(request, User.class);
@@ -123,12 +132,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
-        User user = userRepo.findById(id).orElse(null);
-        if (user != null) {
+        String errMsg = String.format("User with id %d not found", id);
+
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+
             user.setStatus(UserStatus.DELETED);
             user.setUpdatedAt(LocalDateTime.now());
             userRepo.save(user);
-        }
+
     }
 
     @Override
@@ -185,9 +197,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserInfoResponse> usersByFirstName(String name) {
         List<UserInfoResponse> users;
+
         users = userRepo.findByFirstName(name).stream()
                 .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                 .collect(Collectors.toList());
+        String errMsg = String.format("No User with such email %s not found", name);
+        if(users.isEmpty()) {
+            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
+        }
         return users;
     }
 

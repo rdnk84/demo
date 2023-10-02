@@ -23,5 +23,9 @@ public interface CarService {
 
     CarInfoResponse linkCarAndDriver(Long userId, Long carId);
 
-    Page<CarInfoResponse> getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order, String brand, String model);
+    Page<CarInfoResponse> getCarsByParameter(Integer page, Integer perPage, String sort, Sort.Direction order, String brand, String model);
+
+
+
+    Page<CarInfoResponse>  getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order);
 }
