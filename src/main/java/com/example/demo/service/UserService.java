@@ -28,4 +28,8 @@ public interface UserService {
     Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order,String firstName, String lastName, String email);
 
     public List<UserInfoResponse> usersByFirstName(String name);
+
+    void invalidateSessions();
+
+    void sendMsg();
 }

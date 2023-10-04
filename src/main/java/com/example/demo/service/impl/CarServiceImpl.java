@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,9 @@ public class CarServiceImpl implements CarService {
     private final CarRepo carRepo;
     private final ObjectMapper mapper;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
 //    private List<CarInfoResponse> cars = new ArrayList<>();
 //    private Long id = 0L;
 
@@ -53,26 +57,20 @@ public class CarServiceImpl implements CarService {
     @Override
     public CarInfoResponse getCar(Long id) {
         String errMsg = String.format("User with id %d not found", id);
-        Car car = carRepo.findById(id).orElseThrow(() -> {
-            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
-        });
+        Car car = carRepo.findById(id).orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
         return mapper.convertValue(car, CarInfoResponse.class);
     }
 
     private Car getCarById(Long id) {
         String errMsg = String.format("User with id %d not found", id);
-        Car car = carRepo.findById(id).orElseThrow(() -> {
-            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
-        });
+        Car car = carRepo.findById(id).orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
         return car;
     }
 
     @Override
     public CarInfoResponse updateCar(Long id, CarInfoRequest request) {
         String errMsg = String.format("User with id %d not found", id);
-        Car car = carRepo.findById(id).orElseThrow(() -> {
-            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
-        });
+        Car car = carRepo.findById(id).orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
 //        Car car = carRepo.findById(id).orElse(null);
 //        if (car == null) {
 //            return null;
@@ -109,9 +107,7 @@ public class CarServiceImpl implements CarService {
     @Override
     public void deleteCar(Long id) {
         String errMsg = String.format("User with id %d not found", id);
-        Car car = carRepo.findById(id).orElseThrow(() -> {
-            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
-        });
+        Car car = carRepo.findById(id).orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
 
         car.setUpdatedAt(LocalDateTime.now());
         car.setStatus(CarStatus.DELETED);
@@ -177,9 +173,6 @@ public class CarServiceImpl implements CarService {
         List<CarInfoResponse> response = carPageList.getContent().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());
-        if(response.isEmpty()){
-            throw new CustomException("no car with such parameter found", HttpStatus.NOT_FOUND);
-        }
         return new PageImpl<>(response); //класс PageImpl реализует интерфейс Page
         //здесь пустой generic<> потому что мы выше уже указати конкретный тип <CarInfoResponse>
     }
@@ -191,11 +184,7 @@ public class CarServiceImpl implements CarService {
         List<CarInfoResponse> response = cars.getContent().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());
-        if(response.isEmpty()){
-            throw new CustomException("no car with such parameter found", HttpStatus.NOT_FOUND);
-        }
         return new PageImpl<>(response);
-
     }
 
 

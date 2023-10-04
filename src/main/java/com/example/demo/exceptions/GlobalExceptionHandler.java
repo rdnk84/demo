@@ -2,6 +2,7 @@ package com.example.demo.exceptions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
+import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
@@ -21,28 +22,46 @@ import java.util.Map;
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
-public class GlobalException {
+public class GlobalExceptionHandler {
 
     @Bean
     public ErrorAttributes errorAttributes() {
-
-        return new ErrorAttributes() {
+        return new DefaultErrorAttributes() {
             @Override
             public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
-                return ErrorAttributes.super.getErrorAttributes(webRequest, options);
-            }
-
-            @Override
-            public Throwable getError(WebRequest webRequest) {
-                return null;
+                return super.getErrorAttributes(webRequest, ErrorAttributeOptions.defaults()
+                        .including(ErrorAttributeOptions.Include.MESSAGE));
             }
         };
     }
 
+//    @Bean
+//    public ErrorAttributes errorAttributes() {
+//
+//        return new ErrorAttributes() {
+//            @Override
+//            public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
+//                return ErrorAttributes.super.getErrorAttributes(webRequest, options);
+//            }
+//
+//            @Override
+//            public Throwable getError(WebRequest webRequest) {
+//                return null;
+//            }
+//        };
+//    }
+
     @ExceptionHandler(CustomException.class)
     public void handleCustomException(HttpServletResponse response, CustomException ex) throws IOException {
-        response.sendError(ex.getStatus().value(), ex.getMessage());
+        response.sendError(ex.getStatus().value(),ex.getMessage());
+
     }
+
+//    @ExceptionHandler(CustomException.class)
+//    public ResponseEntity<ErrorMessage> handleCustomException(CustomException ex) throws IOException {
+//        return ResponseEntity.status(403).body(new ErrorMessage(ex.getMessage()));
+//
+//    }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorMessage> handleMissingParams(MissingServletRequestParameterException ex) {

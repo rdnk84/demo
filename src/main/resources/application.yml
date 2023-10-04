@@ -23,3 +23,6 @@ logging:
     org:
       hibernate:
         type: trace
+
+app:
+  base-url: itmo.ru

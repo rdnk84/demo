@@ -2,12 +2,14 @@ package com.example.demo.model.db.entity;
 
 import com.example.demo.model.enums.Gender;
 import com.example.demo.model.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,12 +23,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @NotEmpty
     String email;
+
+    @NotEmpty
     String password;
 
+    @NotEmpty
     @Column(name = "first_name")
     String firstName;
 
+    @NotEmpty
     @Column(name = "last_name")
     String lastName;
 
@@ -46,6 +53,6 @@ public class User {
     UserStatus status;
 
     @OneToMany
-     @JsonManagedReference(value = "driver_cars")
+    @JsonManagedReference(value = "driver_cars")
     List<Car> cars;
 }

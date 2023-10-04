@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final ObjectMapper mapper;
     private final UserSearchDao userSearchDao;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 //    @Override
 //    public UserInfoResponse getUser(Long id) {
 
@@ -55,7 +59,7 @@ public class UserServiceImpl implements UserService {
         validateKey(apiKey);
         String errMsg = String.format("User with id %d not found", id);
         userRepo.findById(id)
-                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
         User user = userRepo.findById(id).orElse(new User());
         return mapper.convertValue(user, UserInfoResponse.class);
     }
@@ -64,7 +68,7 @@ public class UserServiceImpl implements UserService {
     public User getUser(Long id) {
         String errMsg = String.format("User with id %d not found", id);
         return userRepo.findById(id)
-                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
     }
 
     @Override
@@ -72,7 +76,7 @@ public class UserServiceImpl implements UserService {
         String errMsg = String.format("User with id %d not found", id);
 
         User user = userRepo.findById(id)
-                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
 //        if (user == null) {
 //            return null;
 //        }
@@ -93,14 +97,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoResponse createUser(UserInfoRequest request) {
+        if(StringUtils.isBlank(request.getEmail())){
+            throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);}
         String email = request.getEmail().trim();
+//        String email = request.getEmail();
 
         if(!EmailValidator.getInstance().isValid(email)){
             throw new CustomException("invalid email", HttpStatus.BAD_REQUEST);
         }
-
         userRepo.findByEmail(email).ifPresent(u -> {throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
         });
+        if(StringUtils.isBlank(request.getLastName()) || StringUtils.isBlank(request.getFirstName()) || StringUtils.isBlank(request.getPassword())) {
+            throw new CustomException("Some of highlighted fields are blank", HttpStatus.BAD_REQUEST);
+        }
         User user = mapper.convertValue(request, User.class);
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus(UserStatus.CREATED);
@@ -135,7 +144,7 @@ public class UserServiceImpl implements UserService {
         String errMsg = String.format("User with id %d not found", id);
 
         User user = userRepo.findById(id)
-                .orElseThrow(() -> {throw new CustomException(errMsg, HttpStatus.NOT_FOUND);});
+                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
 
             user.setStatus(UserStatus.DELETED);
             user.setUpdatedAt(LocalDateTime.now());
@@ -179,7 +188,6 @@ public class UserServiceImpl implements UserService {
 
         List<UserInfoResponse> users;
         Pageable pageRequest = getPageRequest(page, perPage, sort, order);
-        Page<UserInfoResponse> pageOfUsers;
 
         if(firstName == null && lastName == null && email == null) {
             users = userRepo.findAllNotDeleted(pageRequest).stream()
@@ -197,15 +205,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserInfoResponse> usersByFirstName(String name) {
         List<UserInfoResponse> users;
-
         users = userRepo.findByFirstName(name).stream()
                 .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                 .collect(Collectors.toList());
-        String errMsg = String.format("No User with such email %s not found", name);
-        if(users.isEmpty()) {
-            throw new CustomException(errMsg, HttpStatus.NOT_FOUND);
-        }
         return users;
+    }
+
+
+    //в классе JobService прописано расписания вызова этих методов
+    @Override
+    public void invalidateSessions() {
+
+    }
+    @Override
+    public void sendMsg() {
+
     }
 
 
