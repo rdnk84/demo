@@ -6,6 +6,7 @@ import com.example.demo.model.db.repository.UserRepo;
 import com.example.demo.model.db.repository.UserSearchDao;
 import com.example.demo.model.dto.request.UserInfoRequest;
 import com.example.demo.model.dto.response.UserInfoResponse;
+import com.example.demo.model.enums.Gender;
 import com.example.demo.model.enums.UserStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,6 +73,27 @@ public class UserServiceImplTest {
 
     @Test
     public void updateUser() {
+
+        UserInfoRequest request = new UserInfoRequest();
+        request.setAge(88);
+
+        User user = new User();
+        user.setId(1L);
+        user.setAge(35);
+        user.setGender(Gender.FEMALE);
+        user.setFirstName("Sidra");
+        user.setLastName("Sidorova");
+        user.setMiddleName("kdkdkd");
+        user.setEmail("ss@gmail.com");
+        user.setPassword("1234");
+
+        when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepo.save(any(User.class))).thenReturn(user);
+
+        UserInfoResponse response = userService.updateUser(user.getId(), request);
+
+        assertEquals(request.getAge(), response.getAge());
+        assertEquals(user.getEmail(), response.getEmail());
     }
 
     @Test
@@ -83,15 +106,19 @@ public class UserServiceImplTest {
         user.setId(1L);
 
         when(userRepo.findById(1l)).thenReturn(Optional.of(user));
+        when(userRepo.save(any(User.class))).thenReturn(user);
+
         UserInfoResponse response = userService.updateUser(userId, request);
-        assertEquals(Optional.of(response.getId()), Optional.of(user.getId()));
+        assertEquals(request.getEmail(), response.getEmail());
     }
 
     @Test
     public void createUser() {
         UserInfoRequest request = new UserInfoRequest();
         request.setEmail("test@test.com");
-
+        request.setPassword("jjfjf");
+        request.setFirstName("ddd");
+        request.setLastName("aaa");
 
         User user = new User();
         user.setId(1L);
@@ -125,9 +152,7 @@ public class UserServiceImplTest {
     @Test(expected = CustomException.class)
     public void createUser_emptyFields() {
         UserInfoRequest request = new UserInfoRequest();
-
         userService.createUser(request);
-
     }
 
     @Test(expected = CustomException.class)

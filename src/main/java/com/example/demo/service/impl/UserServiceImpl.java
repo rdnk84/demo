@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
         validateKey(apiKey);
         String errMsg = String.format("User with id %d not found", id);
         userRepo.findById(id)
-                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
         User user = userRepo.findById(id).orElse(new User());
         return mapper.convertValue(user, UserInfoResponse.class);
     }
@@ -68,19 +68,23 @@ public class UserServiceImpl implements UserService {
     public User getUser(Long id) {
         String errMsg = String.format("User with id %d not found", id);
         return userRepo.findById(id)
-                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
     }
 
     @Override
     public UserInfoResponse updateUser(Long id, UserInfoRequest request) {
-        String errMsg = String.format("User with id %d not found", id);
 
-        User user = userRepo.findById(id)
-                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
-//        if (user == null) {
-//            return null;
-//        }
-        user.setEmail(StringUtils.isBlank(request.getEmail()) ? user.getEmail() : request.getEmail());
+        User user = getUser(id);
+
+        String email = request.getEmail();
+        if(StringUtils.isBlank(email)) {
+            email = user.getEmail();
+        } else if(!EmailValidator.getInstance().isValid(email)) {
+            throw new CustomException("invalid email", HttpStatus.BAD_REQUEST);
+        } else {
+            email = request.getEmail();
+        }
+        user.setEmail(email);
         user.setGender(request.getGender() == null ? user.getGender() : request.getGender());
         user.setAge(user.getAge() == null ? user.getAge() : request.getAge());
         user.setFirstName(StringUtils.isBlank(request.getFirstName()) ? user.getFirstName() : request.getFirstName());
@@ -97,17 +101,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoResponse createUser(UserInfoRequest request) {
-        if(StringUtils.isBlank(request.getEmail())){
-            throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);}
-        String email = request.getEmail().trim();
-//        String email = request.getEmail();
 
-        if(!EmailValidator.getInstance().isValid(email)){
+        if (!EmailValidator.getInstance().isValid(request.getEmail())) {
             throw new CustomException("invalid email", HttpStatus.BAD_REQUEST);
         }
-        userRepo.findByEmail(email).ifPresent(u -> {throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
-        });
-        if(StringUtils.isBlank(request.getLastName()) || StringUtils.isBlank(request.getFirstName()) || StringUtils.isBlank(request.getPassword())) {
+        String email = request.getEmail().trim();
+        userRepo.findByEmail(email)
+                .ifPresent(u -> {
+                    throw new CustomException("User with this email already exist", HttpStatus.BAD_REQUEST);
+                });
+        if (StringUtils.isBlank(request.getLastName()) || StringUtils.isBlank(request.getFirstName()) || StringUtils.isBlank(request.getPassword())) {
             throw new CustomException("Some of highlighted fields are blank", HttpStatus.BAD_REQUEST);
         }
         User user = mapper.convertValue(request, User.class);
@@ -144,11 +147,11 @@ public class UserServiceImpl implements UserService {
         String errMsg = String.format("User with id %d not found", id);
 
         User user = userRepo.findById(id)
-                .orElseThrow(() ->  new CustomException(errMsg, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
 
-            user.setStatus(UserStatus.DELETED);
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepo.save(user);
+        user.setStatus(UserStatus.DELETED);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepo.save(user);
 
     }
 
@@ -184,12 +187,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order,String firstName, String lastName, String email) {
+    public Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order, String firstName, String lastName, String email) {
 
         List<UserInfoResponse> users;
         Pageable pageRequest = getPageRequest(page, perPage, sort, order);
 
-        if(firstName == null && lastName == null && email == null) {
+        if (firstName == null && lastName == null && email == null) {
             users = userRepo.findAllNotDeleted(pageRequest).stream()
                     .map(u -> mapper.convertValue(u, UserInfoResponse.class))
                     .collect(Collectors.toList());
@@ -217,6 +220,7 @@ public class UserServiceImpl implements UserService {
     public void invalidateSessions() {
 
     }
+
     @Override
     public void sendMsg() {
 
