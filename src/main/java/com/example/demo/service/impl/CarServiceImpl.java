@@ -99,7 +99,7 @@ public class CarServiceImpl implements CarService {
         Car car = mapper.convertValue(request, Car.class);
         car.setStatus(CarStatus.CREATED);
         car.setCreatedAt(LocalDateTime.now());
-        carRepo.save(car);
+        car = carRepo.save(car);
         CarInfoResponse carCreated = mapper.convertValue(car, CarInfoResponse.class);
         return carCreated;
     }
@@ -111,6 +111,7 @@ public class CarServiceImpl implements CarService {
 
         car.setUpdatedAt(LocalDateTime.now());
         car.setStatus(CarStatus.DELETED);
+        carRepo.save(car);
     }
 
     @Override
@@ -133,18 +134,20 @@ public class CarServiceImpl implements CarService {
     @Override
     public CarInfoResponse linkCarAndDriver(Long userId, Long carId) {
         Car car = getCarById(carId);
+        if (car.getDriver() != null) {
+            throw new CustomException("Driver already exists", HttpStatus.BAD_REQUEST);
+        }
         User user = userService.getUser(userId);
         user.getCars().add(car);
         userService.updateCarList(user); //обновили в DB сведения о Юзере (ему добавилась новая машина)
-        car.setDriver(user);//в сущности Car обновили данные о пользователе
-        carRepo.save(car);//обновили в DB сведения о данной машине (теперь у нее есть Юзер)
+        car.setDriver(user);// сущности Car приписали владельца
+        carRepo.save(car);//обновили в DB сведения о данной машине (теперь у нее есть владелец)
 
         CarInfoResponse carInfoResponse = mapper.convertValue(car, CarInfoResponse.class);
         UserInfoResponse userInfoResponse = mapper.convertValue(user, UserInfoResponse.class);
         carInfoResponse.setUser(userInfoResponse); //обновили наш объект Car Dto добавив ему Юзера
         return carInfoResponse;
     }
-
 
 
 //    @Override
@@ -178,9 +181,9 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    public Page<CarInfoResponse>  getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order) {
+    public Page<CarInfoResponse> getAllCars(Integer page, Integer perPage, String sort, Sort.Direction order) {
         Pageable pageRequest = getPageRequest(page, perPage, sort, order);
-      Page<Car> cars = carRepo.findAllNotDeleted(pageRequest);
+        Page<Car> cars = carRepo.findAllNotDeleted(pageRequest);
         List<CarInfoResponse> response = cars.getContent().stream()
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());

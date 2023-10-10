@@ -1,6 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.exceptions.CustomException;
+import com.example.demo.model.db.entity.Car;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.UserRepo;
 import com.example.demo.model.db.repository.UserSearchDao;
@@ -18,6 +19,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.swing.text.html.Option;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,7 +70,7 @@ public class UserServiceImplTest {
         user.setId(1L);
         when(userRepo.findById(any())).thenReturn(Optional.of(user));
         userService.getUser(id);
-
+        assertEquals(id, user.getId());
     }
 
     @Test
@@ -86,8 +88,8 @@ public class UserServiceImplTest {
         user.setMiddleName("kdkdkd");
         user.setEmail("ss@gmail.com");
         user.setPassword("1234");
-
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
+
         when(userRepo.save(any(User.class))).thenReturn(user);
 
         UserInfoResponse response = userService.updateUser(user.getId(), request);
@@ -122,7 +124,7 @@ public class UserServiceImplTest {
 
         User user = new User();
         user.setId(1L);
-
+        //в каждом таком выражении(специальное для этих тестов) - это мы обращаемся к "Мок" серверу, к нашей "заглушке"
         when(userRepo.save(any(User.class))).thenReturn(user);
 
         UserInfoResponse response = userService.createUser(request);
@@ -169,7 +171,13 @@ public class UserServiceImplTest {
         user.setId(1L);
 
         when(userRepo.findById(1L)).thenReturn(Optional.of(user));
+
+        //здесь мы прогоняем нашего юзера через этот метод в сервисе,где он сохраняется с новым статусом
         userService.deleteUser(1L);
+
+        //здесь мы проверяем - была и ходка в репозиторий и сколько раз и тоже сохраняем нашего юзера
+        //"times" показывает сколько раз был вызван "save"
+        //а дальше .save - мы как бы вызываем userRepo.save и сохраняем наш объект
         verify(userRepo, times(1)).save(any(User.class));
         assertEquals(UserStatus.DELETED, user.getStatus());
 
@@ -182,6 +190,15 @@ public class UserServiceImplTest {
 
     @Test
     public void updateCarList() {
+        User user = new User();
+        user.setId(1L);
+        when(userRepo.findById(1L)).thenReturn(Optional.of(user));
+        List<Car> cars = new ArrayList<>();
+        Car car = new Car();
+        cars.add(car);
+        user.setCars(cars);
+        userService.updateCarList(user);
+        verify(userRepo, times(1)).save(any(User.class));
     }
 
     @Test

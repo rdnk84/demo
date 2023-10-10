@@ -18,11 +18,19 @@ spring:
           lob:
             non_contextual_creation: true
 
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 180000
+        loggerLevel: basic
+
 logging:
   level:
     org:
       hibernate:
         type: trace
 
-app:
-  base-url: itmo.ru
+#app:
+#  base-url: itmo.ru

@@ -149,11 +149,9 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepo.findById(id)
                 .orElseThrow(() -> new CustomException(errMsg, HttpStatus.NOT_FOUND));
-
         user.setStatus(UserStatus.DELETED);
         user.setUpdatedAt(LocalDateTime.now());
         userRepo.save(user);
-
     }
 
     @Override
