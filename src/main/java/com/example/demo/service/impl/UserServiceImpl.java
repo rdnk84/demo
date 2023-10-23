@@ -1,6 +1,8 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.exceptions.CustomException;
+
+import com.example.demo.model.auth.userDetailsImpl;
 import com.example.demo.model.db.entity.User;
 import com.example.demo.model.db.repository.UserRepo;
 import com.example.demo.model.db.repository.UserSearchDao;
@@ -9,6 +11,7 @@ import com.example.demo.model.dto.response.CarInfoResponse;
 import com.example.demo.model.dto.response.UserInfoResponse;
 import com.example.demo.model.enums.UserStatus;
 import com.example.demo.service.UserService;
+import com.example.demo.service.kafka.NotifyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,9 @@ import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,11 +36,12 @@ import static com.example.demo.utils.PaginationUtil.getPageRequest;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepo userRepo;
     private final ObjectMapper mapper;
     private final UserSearchDao userSearchDao;
+    private final NotifyService notifyService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -120,6 +127,7 @@ public class UserServiceImpl implements UserService {
 
         User save = userRepo.save(user);
         UserInfoResponse createdUser = mapper.convertValue(save, UserInfoResponse.class);
+        notifyService.sendNotification(String.format("User %s is added", user.getFirstName()));
         return createdUser;
     }
 
@@ -184,7 +192,7 @@ public class UserServiceImpl implements UserService {
                 .map(c -> mapper.convertValue(c, CarInfoResponse.class))
                 .collect(Collectors.toList());
     }
-
+//мой кастомный метода с использованием Criteria API
     @Override
     public Page<UserInfoResponse> usersByQuery(Integer page, Integer perPage, String sort, Sort.Direction order, String firstName, String lastName, String email) {
 
@@ -223,6 +231,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendMsg() {
 
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepo.findByEmail(username).orElseThrow();
+        return new userDetailsImpl(user);
     }
 
 

@@ -17,12 +17,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.demo.utils.PaginationUtil.getPageRequest;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -168,12 +173,31 @@ public class CarServiceImplTest {
 
     @Test
     public void getAllCars() {
-
+        Car car = new Car();
+        car.setId(1L);
+        List<Car> cars = (List.of(car));
+        when(carRepo.findAll()).thenReturn(cars);
+        List<CarInfoResponse> result = carService.getAllCars();
+        assertEquals(result.size(), 1);
     }
 
 
     @Test
     public void getCarsByParameter() {
+        String model = "Model";
+        String brand = "Brand";
+        Car car = new Car();
+        car.setId(1L);
+        car.setBrand(model);
+        car.setPrice(100L);
+        car.setModel(brand);
+        List<Car> cars = (List.of(car));
+        Pageable pageRequest = getPageRequest(1,2, "price", Sort.Direction.DESC);
+        Page<Car> page = new PageImpl<>(cars, pageRequest, 1);
+        when(carRepo.findAllNotDeleted(any(Pageable.class), anyString(), anyString())).thenReturn(page);
+        Page<CarInfoResponse> result = carService.getCarsByParameter(1, 2, "price", Sort.Direction.DESC, model, brand);
+
+        assertEquals(result.getNumberOfElements(), 1);
     }
 
     @Test

@@ -17,6 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import javax.swing.text.html.Option;
 import java.util.ArrayList;
@@ -185,17 +188,28 @@ public class UserServiceImplTest {
 
     @Test
     public void getAllUsers() {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@test.com");
 
+        List<User> users = (List.of(user));
+        when(userRepo.findAllNotDeleted(any(Pageable.class), anyString())).thenReturn(users);
+
+        Page<UserInfoResponse> result = userService.getAllUsers(1, 2, "email", Sort.Direction.DESC, "someFilter");
+        assertEquals(result.getNumberOfElements(), 1);
     }
+
 
     @Test
     public void updateCarList() {
         User user = new User();
         user.setId(1L);
         when(userRepo.findById(1L)).thenReturn(Optional.of(user));
-        List<Car> cars = new ArrayList<>();
+
         Car car = new Car();
-        cars.add(car);
+//        List<Car> cars = new ArrayList<>();
+//        cars.add(car);
+        List<Car> cars = (List.of(car));
         user.setCars(cars);
         userService.updateCarList(user);
         verify(userRepo, times(1)).save(any(User.class));
@@ -203,16 +217,25 @@ public class UserServiceImplTest {
 
     @Test
     public void getCarsByUser() {
+
     }
 
     @Test
     public void usersByQuery() {
+
     }
 
     @Test
     public void usersByFirstName() {
-        String firstName = "firstName";
+        String firstName = "Ivan";
+        User user = new User();
+        user.setId(1L);
+        user.setFirstName("Ivan");
 
+        List<User> users = (List.of(user));
+        when(userRepo.findByFirstName(anyString())).thenReturn(users);
+       List<UserInfoResponse> result = userService.usersByFirstName(firstName);
+        assertEquals(result.get(0).getFirstName(), firstName);
     }
 
     @Test

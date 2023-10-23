@@ -64,7 +64,6 @@ public class UserController {
     @Operation(summary = "Get User by id")
     @GetMapping("/{id}")
     public UserInfoResponse getUser(@RequestHeader("api-key") String apiKey, @PathVariable Long id) {
-
         return userService.getUserDto(apiKey, id);
     }
 

@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.JUnitRestDocumentation;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.ConfigurableMockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -53,7 +54,7 @@ public class UserControllerTest {
     public void setUp() {
         ConfigurableMockMvcBuilder builder = MockMvcBuilders.webAppContextSetup(this.webApplicationContext)
                 .apply(documentationConfiguration(this.restDocumentation));
-               this.mockMvc = builder.build();
+        this.mockMvc = builder.build();
     }
 
     @Test
@@ -63,8 +64,8 @@ public class UserControllerTest {
         System.out.println(content);
         String uri = "/users";
         mockMvc.perform(post(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(content))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Ivan"))
@@ -85,8 +86,15 @@ public class UserControllerTest {
     }
 
     @Test
-    public void getUser() {
-
+    public void getUser() throws Exception {
+        Long userId = 1L;
+        String uri = "/users/1";
+        this.mockMvc.perform(MockMvcRequestBuilders
+                        .get(uri, userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andDo(document(uri.replace("/", "")));
     }
 
     @Test

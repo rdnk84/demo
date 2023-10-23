@@ -5,6 +5,20 @@ spring:
     password: 357
     driver-class-name: org.postgresql.Driver
 
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 2
+    consumer:
+      client-id: itmmo-server-client
+      group-id: group
+      enable-auto-commit: true
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   jpa:
     database: postgresql
     show-sql: true
@@ -32,5 +46,10 @@ logging:
       hibernate:
         type: trace
 
-#app:
-#  base-url: itmo.ru
+app:
+  base-url: itmo.ru
+
+kafka:
+  topics:
+    notification: itmo
+
